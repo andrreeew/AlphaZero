@@ -1,20 +1,35 @@
 import numpy as np
-from src_net import get_next_state, check, get_candidate, get_player
+import torch
+import torch.nn as nn
+from src_net import get_next_state, check, get_candidate, get_player, init_state
 
+def softmax(x):
+    probs = np.exp(x - np.max(x))
+    probs /= np.sum(probs)
+    return probs
 
 class Node:
-    def __init__(self, parent, prob, state, action, state_now=None, c_puct=5):
+    def __init__(self, parent=None, prob=1, state=None, action=None, state_now=None, c_puct=5):
         self.N, self.W, self.Q, self.P = 0, 0, 0, prob
         self.parent, self.children = parent, {}
         self.state, self.action, self.state_now = state, action, state_now
+        self.end, self.winner = None, None
         self.c_puct = c_puct
     
+    def check(self):
+        if(self.end is not None):
+            return self.end, self.winner
+        if(self.state_now is None):
+            self.state_now = get_next_state(self.state, self.action)
+        self.end, self.winner = check(self.state_now)
+        return self.end, self.winner
+
     def get_value(self):
         return self.Q+self.c_puct*self.P*np.sqrt(self.parent.N)/(1+self.N)
 
 
 class MCT:
-    def __init__(self, root, policy_value_fn, c_puct=5):
+    def __init__(self, root=None, policy_value_fn=None, c_puct=5):
         self.root = root
         self.policy_value_fn = policy_value_fn
         self.c_puct = c_puct
@@ -30,17 +45,24 @@ class MCT:
         if(n.state_now is None):
             n.state_now = get_next_state(n.state, n.action)
         actions = get_candidate(n.state_now)
-        probs = self.policy_value_fn(n.state_now)[0]
+        if(isinstance(self.policy_value_fn, nn.Module)):
+            probs = self.policy_value_fn(torch.tensor(n.state_now).float())[0].detach().numpy()
+        else:
+            probs = self.policy_value_fn(n.state_now)[0]
  
         n.children = {action:Node(n, probs[action], n.state_now, action, c_puct=self.c_puct) for action in actions}  
     
     def backup(self, n):
         if(n.state_now is None):
             n.state_now = get_next_state(n.state, n.action)
-        end, player = check(n.state_now)
+        end, player = n.check()
         if(not end):
             player = get_player(n.state_now)
-            v = self.policy_value_fn(n.state_now)[1]
+            if(isinstance(self.policy_value_fn, nn.Module)):
+                v = self.policy_value_fn(torch.tensor(n.state_now).float())[1].detach().numpy()
+            else:
+                v = self.policy_value_fn(n.state_now)[1]
+         
         else:
             v = 1
 
@@ -54,6 +76,7 @@ class MCT:
             cur.Q = 1.0*cur.W/cur.N
             cur = cur.parent
         cur.N += 1
+
             
 
     def simulate(self, num=1):
@@ -64,7 +87,7 @@ class MCT:
             
             if(cur.state_now is None):
                 cur.state_now = get_next_state(cur.state, cur.action)
-            end, winner = check(cur.state_now)
+            end, winner = cur.check()
             if(not end):
                 self.expand(cur)
                 cur = self.select(cur)
@@ -77,12 +100,42 @@ class MCT:
         self.root = self.root.children[action]
         self.root.parent = None
     
-    def play(self, temp=1):
-        actions_probs = [(action, np.float_power(node.N, 1.0/temp)) for action, node in self.root.children.items()]
-        actions, probs = zip(*actions_probs)
-
+    def get_actions_probs(self, temp=1e-3):
+        actions_visits = [(action, node.N) for action, node in self.root.children.items()]
+        actions, visits = zip(*actions_visits)
         # print(actions_probs)
-        probs /= np.sum(probs)
+        probs = softmax(1.0/temp * np.log(np.array(visits) + 1e-10))
+        return actions, probs
+    
+    def play(self, temp=1e-3):
+        actions, probs = self.get_actions_probs(temp=temp)
         action = actions[np.random.choice(len(actions), p=probs)]
         self.move(action)
         return action
+    
+    #自己与自己下生成数据
+    def self_play(self, num=100):
+        features, labels = [], []
+        while(True):
+            self.simulate(num)
+            actions, probs = self.get_actions_probs()
+            features.append(self.root.state_now)
+            labels.append([(actions, probs)])
+            action = actions[np.random.choice(len(actions), 
+                                p=0.75*probs+0.25*np.random.dirichlet(0.03*np.ones(len(probs))))]
+            self.move(action)
+
+            end, winner = self.root.check()
+            if(end):
+                break
+        
+        for i in range(len(features)):
+            if(get_player(features[i])==winner):
+                labels[i].append(1)
+            elif(get_player(features[i])==-winner):
+                labels[i].append(-1)
+            else:
+                labels[i].append(0)
+        
+        return features, labels
+    

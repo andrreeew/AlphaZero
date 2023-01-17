@@ -1,6 +1,7 @@
 from copy import deepcopy
 import numpy as np
 import game
+cost_time = 0
 
 def get_chessboard(state):
     return state[0]
@@ -22,16 +23,15 @@ def get_next_state(state, action):
         state_copy[-1] = -state_copy[-1]
         for i in range(len(state_copy)-2, 0, -1):
             state_copy[i] = state_copy[i-1]
-
+    
     return state_copy
 
 
 def check(state):
     return game.check(get_chessboard(state))
-
+    # return game.check(get_chessboard(state).numpy())
 
 def get_candidate(state):
-    # print(get_candidate(state), get_player(state))
     return game.get_candidate(get_chessboard(state), get_player(state))
 
 def init_state(size=8):

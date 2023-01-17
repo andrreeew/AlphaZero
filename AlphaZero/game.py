@@ -1,5 +1,6 @@
 from copy import deepcopy
 import numpy as np
+import torch
 
 COLOR_BLACK=-1
 COLOR_WHITE=1
@@ -73,8 +74,12 @@ def check(chessboard):
     end, winner = 0, 0
     if(len(candidate)==0):
         end = 1
-        white = np.sum(chessboard==COLOR_WHITE)
-        black = np.sum(chessboard==COLOR_BLACK)
+        if(isinstance(chessboard, torch.Tensor)):
+            white = torch.sum(chessboard==COLOR_WHITE)
+            black = torch.sum(chessboard==COLOR_BLACK)
+        else:
+            white = np.sum(chessboard==COLOR_WHITE)
+            black = np.sum(chessboard==COLOR_BLACK)
         # print('white', white)
         # print('black', black)
         if(white>black):
@@ -98,13 +103,20 @@ def init_game(size=8):
             [ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0],
             [ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0],
             [ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0]]
-    else:
+    elif(size==4):
         cheessboard = [
             [ 0 , 0 , 0 , 0],
             [ 0 , COLOR_BLACK , COLOR_WHITE , 0],
             [ 0 , COLOR_WHITE , COLOR_BLACK , 0],
             [ 0 , 0 , 0 , 0]]
-    
+    else:
+        cheessboard = [
+            [ 0 , 0 , 0 , 0 , 0 , 0],
+            [ 0 , 0 , 0 , 0 , 0 , 0],
+            [ 0 , 0 , COLOR_BLACK , COLOR_WHITE , 0 , 0],
+            [ 0 , 0 , COLOR_WHITE , COLOR_BLACK , 0 , 0],
+            [ 0 , 0 , 0 , 0 , 0 , 0],
+            [ 0 , 0 , 0 , 0 , 0 , 0]]
     return np.asarray(cheessboard)
     
 
