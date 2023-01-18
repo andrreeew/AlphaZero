@@ -13,16 +13,6 @@ COLOR_WHITE=1
 COLOR_NONE=0
 random.seed(0)
 
-net = None
-
-
-def policy_value_fn(state):
-    global net
-    state_copy = torch.tensor(state).float()
-    net(state_copy)
-    policy = torch.ones((8, 8))
-    value = torch.tensor(0)
-    return policy.detach().numpy(), value.detach().numpy()
 
 
 class AI(object):
@@ -32,24 +22,24 @@ class AI(object):
         self.color = color
         self.time_out = time_out
         self.candidate_list = []
-        global net
+        self.simulate_num = simulate_num
         net = PolicyValueNet(chessboard_size)
-
+        # if(chessboard_size==6):
+        #     net.load_state_dict(torch.load('reversi6.params'))
         state = src_net.init_state(chessboard_size)
         root = Node(None, 1, None, None, state_now=deepcopy(state))  
-        self.mct = MCT(root, policy_value_fn, 0.1)
+        self.mct = MCT(root, net)
         
     
     def init(self):
-        state = src_net.init_state(self.chessboard_size)
-        root = Node(None, 1, None, None, state_now=deepcopy(state))  
-        self.mct = MCT(root, policy_value_fn, 0.1)
+        root = Node(state_now=deepcopy(src_net.init_state(self.chessboard_size)))  
+        self.mct.root = root
 
     def go(self, chessboard):
         action = None
         for i in range(len(chessboard)):
             for j in range(len(chessboard)):
-                if(chessboard[i][j]!=0 and self.mct.root.state_now[0][i][j]==0):
+                if(chessboard[i][j]!=0 and src_net.get_chessboard(self.mct.get_current_state())[i][j]==0):
                     action = (i, j)
                     break
             if(action):
@@ -61,7 +51,7 @@ class AI(object):
         if(not game.get_candidate(chessboard, self.color)):
             return None
 
-        self.mct.simulate(100)
+        self.mct.simulate(self.simulate_num)
         action = self.mct.play()
         return action
 

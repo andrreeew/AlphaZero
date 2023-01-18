@@ -100,6 +100,13 @@ class MCT:
         self.root = self.root.children[action]
         self.root.parent = None
     
+
+    def get_current_state(self):
+        if(self.root.state_now is None):
+            self.root.state_now = get_next_state(self.root.state,self.root.action)
+        
+        return self.root.state_now
+    
     def get_actions_probs(self, temp=1e-3):
         actions_visits = [(action, node.N) for action, node in self.root.children.items()]
         actions, visits = zip(*actions_visits)
@@ -114,13 +121,12 @@ class MCT:
         return action
     
     #自己与自己下生成数据
-    def self_play(self, num=100):
-        features, labels = [], []
+    def self_play(self, num=100, temp=1):
+        data = []
         while(True):
             self.simulate(num)
-            actions, probs = self.get_actions_probs()
-            features.append(self.root.state_now)
-            labels.append([(actions, probs)])
+            actions, probs = self.get_actions_probs(temp)
+            data.append([self.get_current_state(), (actions, probs)])
             action = actions[np.random.choice(len(actions), 
                                 p=0.75*probs+0.25*np.random.dirichlet(0.03*np.ones(len(probs))))]
             self.move(action)
@@ -129,13 +135,13 @@ class MCT:
             if(end):
                 break
         
-        for i in range(len(features)):
-            if(get_player(features[i])==winner):
-                labels[i].append(1)
-            elif(get_player(features[i])==-winner):
-                labels[i].append(-1)
+        for i in range(len(data)):
+            if(get_player(data[i][0])==winner):
+                data[i].append(1)
+            elif(get_player(data[i][0])==-winner):
+                data[i].append(-1)
             else:
-                labels[i].append(0)
+                data[i].append(0)
         
-        return features, labels
+        return data
     

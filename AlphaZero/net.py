@@ -8,25 +8,28 @@ class PolicyValueNet(nn.Module):
         super().__init__()
         self.size = size
         self.conv_layer = nn.Sequential(
-            nn.Conv2d(in_channels=4, out_channels=32, kernel_size=3, padding=1),
+            nn.Conv2d(in_channels=5, out_channels=32, kernel_size=3, padding=1),
             nn.ReLU(),
+            nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3, padding=1),
+            nn.ReLU(),
+            nn.Conv2d(in_channels=64, out_channels=128, kernel_size=3, padding=1),
         )
 
         self.policy_layer = nn.Sequential(
-            nn.Conv2d(in_channels=32, out_channels=1, kernel_size=1),
+            nn.Conv2d(in_channels=128, out_channels=4, kernel_size=1),
             nn.ReLU(),
-            nn.Flatten(),
-            nn.Linear(in_features=size*size, out_features=64),
+            nn.Flatten(-3, -1),
+            nn.Linear(in_features=4*size*size, out_features=2*size*size),
             nn.ReLU(),
-            nn.Linear(in_features=64, out_features=size*size),
+            nn.Linear(in_features=2*size*size, out_features=size*size),
             nn.Softmax()
         )
 
         self.value_layer = nn.Sequential(
-            nn.Conv2d(in_channels=32, out_channels=1, kernel_size=1),
+            nn.Conv2d(in_channels=128, out_channels=2, kernel_size=1),
             nn.ReLU(),
-            nn.Flatten(),
-            nn.Linear(in_features=size*size, out_features=64),
+            nn.Flatten(-3, -1),
+            nn.Linear(in_features=2*size*size, out_features=64),
             nn.ReLU(),
             nn.Linear(in_features=64, out_features=1),
             nn.Tanh()
