@@ -24,8 +24,7 @@ def get_next_state(state, action):
 
     if((not game.get_candidate(chessboard, get_player(state_copy))) and (not game.check(chessboard)[0])):
         state_copy[-1] = -state_copy[-1]
-        state_copy[0], state_copy[1] = state_copy[1], state_copy[0]
-        state_copy[2], state_copy[3] = state_copy[3], state_copy[2]
+        state_copy[[0, 1, 2, 3]] = state_copy[[1, 0, 3, 2]]
     
     return state_copy
 

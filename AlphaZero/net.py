@@ -13,15 +13,14 @@ class PolicyValueNet(nn.Module):
             nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3, padding=1),
             nn.ReLU(),
             nn.Conv2d(in_channels=64, out_channels=128, kernel_size=3, padding=1),
+            nn.ReLU()
         )
 
         self.policy_layer = nn.Sequential(
             nn.Conv2d(in_channels=128, out_channels=4, kernel_size=1),
             nn.ReLU(),
             nn.Flatten(-3, -1),
-            nn.Linear(in_features=4*size*size, out_features=2*size*size),
-            nn.ReLU(),
-            nn.Linear(in_features=2*size*size, out_features=size*size),
+            nn.Linear(in_features=4*size*size, out_features=size*size),
             nn.Softmax()
         )
 
