@@ -14,7 +14,6 @@ COLOR_NONE=0
 random.seed(0)
 
 
-
 class AI(object):
 
     def __init__(self, chessboard_size, color, time_out=4, simulate_num=1000, load_state=False):
@@ -24,8 +23,9 @@ class AI(object):
         self.candidate_list = []
         self.simulate_num = simulate_num
         net = PolicyValueNet(chessboard_size)
-        if(chessboard_size==6 and load_state):
-            net.load_state_dict(torch.load('reversi6.params'))
+        if(load_state):
+            params = 'reversi'+str(chessboard_size)+'.params'
+            net.load_state_dict(torch.load(params))
         state = src_net.init_state(chessboard_size)
         root = Node(None, 1, None, None, state_now=deepcopy(state))  
         self.mct = MCT(root, net)

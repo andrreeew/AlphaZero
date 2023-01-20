@@ -111,7 +111,11 @@ class MCT:
         actions_visits = [(action, node.N) for action, node in self.root.children.items()]
         actions, visits = zip(*actions_visits)
         # print(actions_probs)
-        probs = softmax(1.0/temp * np.log(np.array(visits) + 1e-10))
+        if(temp==1):
+            sum = np.sum(np.array(visits))
+            probs = np.array(visits)/sum
+        else:
+            probs = softmax(1.0/temp * np.log(np.array(visits) + 1e-10))
         return actions, probs
     
     def play(self, temp=1e-3):
@@ -123,8 +127,12 @@ class MCT:
     #自己与自己下生成数据
     def self_play(self, num=100, temp=1):
         data = []
+        cnt = 0
         while(True):
+            cnt += 1
             self.simulate(num)
+            if(cnt==20):
+                temp = 0.001 
             actions, probs = self.get_actions_probs(temp)
             data.append([self.get_current_state(), (actions, probs)])
             action = actions[np.random.choice(len(actions), 
