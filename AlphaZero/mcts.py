@@ -33,6 +33,9 @@ class MCT:
         self.root = root
         self.policy_value_fn = policy_value_fn
         self.c_puct = c_puct
+
+    def set_root(self, root):
+        self.root = root
     
     def is_root(self, n):
         return self.root==n
@@ -46,7 +49,7 @@ class MCT:
             n.state_now = get_next_state(n.state, n.action)
         actions = get_candidate(n.state_now)
         if(isinstance(self.policy_value_fn, nn.Module)):
-            probs = self.policy_value_fn(torch.tensor(n.state_now).float())[0].detach().numpy()
+            probs = self.policy_value_fn(torch.tensor(n.state_now).float().unsqueeze(0))[0].detach().numpy()
         else:
             probs = self.policy_value_fn(n.state_now)[0]
  
@@ -59,7 +62,7 @@ class MCT:
         if(not end):
             player = get_player(n.state_now)
             if(isinstance(self.policy_value_fn, nn.Module)):
-                v = self.policy_value_fn(torch.tensor(n.state_now).float())[1].detach().numpy()
+                v = self.policy_value_fn(torch.tensor(n.state_now).float().unsqueeze(0))[1].detach().numpy()
             else:
                 v = self.policy_value_fn(n.state_now)[1]
          
@@ -131,7 +134,7 @@ class MCT:
         while(True):
             cnt += 1
             self.simulate(num)
-            if(cnt==20):
+            if(cnt==15):
                 temp = 0.001 
             actions, probs = self.get_actions_probs(temp)
             data.append([self.get_current_state(), (actions, probs)])
