@@ -93,30 +93,9 @@ def check(chessboard):
 
 
 def init_game(size=8):
-    if(size==8):
-        cheessboard = [
-            [ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0],
-            [ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0],
-            [ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0],
-            [ 0 , 0 , 0 , COLOR_BLACK , COLOR_WHITE , 0 , 0 , 0],
-            [ 0 , 0 , 0 , COLOR_WHITE , COLOR_BLACK , 0 , 0 , 0],
-            [ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0],
-            [ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0],
-            [ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0]]
-    elif(size==4):
-        cheessboard = [
-            [ 0 , 0 , 0 , 0],
-            [ 0 , COLOR_BLACK , COLOR_WHITE , 0],
-            [ 0 , COLOR_WHITE , COLOR_BLACK , 0],
-            [ 0 , 0 , 0 , 0]]
-    else:
-        cheessboard = [
-            [ 0 , 0 , 0 , 0 , 0 , 0],
-            [ 0 , 0 , 0 , 0 , 0 , 0],
-            [ 0 , 0 , COLOR_BLACK , COLOR_WHITE , 0 , 0],
-            [ 0 , 0 , COLOR_WHITE , COLOR_BLACK , 0 , 0],
-            [ 0 , 0 , 0 , 0 , 0 , 0],
-            [ 0 , 0 , 0 , 0 , 0 , 0]]
-    return np.asarray(cheessboard)
+    cheessboard = np.zeros((size, size))
+    cheessboard[int(size/2)-1][int(size/2)-1], cheessboard[int(size/2)][int(size/2)] = COLOR_BLACK, COLOR_BLACK
+    cheessboard[int(size/2)-1][int(size/2)], cheessboard[int(size/2)][int(size/2)-1] = COLOR_WHITE, COLOR_WHITE
+    return cheessboard
     
 

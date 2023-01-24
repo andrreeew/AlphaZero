@@ -69,10 +69,10 @@ if __name__ == '__main__':
     # net2 = PolicyValueNet(SIZE)
     # net2.load_state_dict(torch.load('reversi'+str(SIZE)+'_tmp.params'))
     
-    player_white = player_mcts(SIZE, COLOR_WHITE, simulate_num=500, net=net1)
+    player_white = player_mcts(SIZE, COLOR_WHITE, simulate_num=400, net=net1)
     player_black = player_greedy(SIZE, COLOR_BLACK)
 
-    # player_black = player_mcts(SIZE, COLOR_BLACK, simulate_num=500, net=net1)
+    # player_black = player_mcts(SIZE, COLOR_BLACK, simulate_num=400, net=net1)
     # player_white = player_greedy(SIZE, COLOR_WHITE)
     
 
