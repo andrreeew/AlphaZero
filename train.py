@@ -23,7 +23,7 @@ class MyDataset(Dataset):
 
     def __len__(self):
         return len(self.y)
-    
+
 
 
 def train_epoch(net, train_iter, loss, updater):
@@ -51,10 +51,15 @@ def train(net, loss, updater, data, batch_size, num_epochs, sample_size):
 
     net.train()
 
+    policy_loss_begin, value_loss_begin = None, None
     for epoch in range(num_epochs):
         policy_loss, value_loss = train_epoch(net, train_iter, loss, updater)
-      
-    return policy_loss, value_loss
+        if(policy_loss_begin is None):
+            policy_loss_begin, value_loss_begin = policy_loss, value_loss
+
+    return (policy_loss_begin, value_loss_begin), (policy_loss, value_loss)
+
+    
 
 
 def preprocess_data(data):
@@ -102,16 +107,16 @@ if __name__ == '__main__':
 
     buffer_size = 32*8*500
     data_buffer = deque(maxlen=buffer_size)
-    batch_size = 1024
-    num_epochs = 5
-    num_games = 1
-    checkpoint = 100
+    batch_size = 2048
+    num_epochs = 2
+    num_games = 100
+    checkpoint = 2
     def sample_size():
-        return batch_size
+        return len(data_buffer)
 
     c_cput = 2
     num_simulate = 50
-    lr = 2e-3
+    lr = 2e-2
 
     net = PolicyValueNet(CHESSBOARD_SIZE)
     policy_value_loss = PolicyValueLoss()
@@ -137,24 +142,25 @@ if __name__ == '__main__':
             mct.set_root(Node(state_now=init_state(CHESSBOARD_SIZE)))
             data_buffer.extend(preprocess_data(mct.self_play(num=num_simulate)))
             game_cnt += 1
-            if(game_cnt%10==0 and game_cnt!=num_games):
+            if(game_cnt%10==0):
                 print(game_cnt, end=' ')
+        print('')
         print('step:', cnt, 'game_num:', game_cnt)
 
 
-        updater = torch.optim.Adam(net.parameters(), lr=lr, weight_decay=1e-4)
-        # updater = torch.optim.SGD(net.parameters(), lr=lr, momentum=0.9, weight_decay=1e-4)
+        # updater = torch.optim.Adam(net.parameters(), lr=lr, weight_decay=1e-4)
+        updater = torch.optim.SGD(net.parameters(), lr=lr, momentum=0.9, weight_decay=1e-4)
         if(len(data_buffer)<sample_size()):
             continue
-        policy_loss, value_loss = train(net, policy_value_loss, updater, data_buffer, batch_size, num_epochs, 
+        loss_begin, loss = train(net, policy_value_loss, updater, data_buffer, batch_size, num_epochs, 
                                             sample_size=sample_size())
         
-        loss_sum += policy_loss+value_loss
-        policy_loss_sum += policy_loss
+        loss_sum += loss_begin[0]+loss_begin[1]
+        policy_loss_sum += loss_begin[0]
 
         
-        print('step:', cnt, 'cost time:', time.time()-start, 
-                                'loss:', policy_loss+value_loss, 'entropy loss:', policy_loss)
+        print('step:', cnt, 'cost_time:', int(time.time()-start), end=' ')
+        print('loss_begin:', loss_begin[0]+loss_begin[1], 'entropy_loss_begin:', loss_begin[0], 'loss:', loss[0]+loss[1], 'entropy_loss:', loss[0])
         
         if(cnt%checkpoint==0):
             save(net, data_buffer, CHESSBOARD_SIZE, GAME)

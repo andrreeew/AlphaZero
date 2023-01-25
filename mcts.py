@@ -140,7 +140,7 @@ class MCT:
             actions, probs = self.get_actions_probs(temp)
             data.append([self.get_current_state(), (actions, probs)])
             action = actions[np.random.choice(len(actions), 
-                                p=0.75*probs+0.25*np.random.dirichlet(0.01*np.ones(len(probs))))]
+                                p=0.75*probs+0.25*np.random.dirichlet(0.03*np.ones(len(probs))))]
             self.move(action)
 
             end, winner = self.root.check()
