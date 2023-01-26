@@ -110,7 +110,7 @@ if __name__ == '__main__':
     batch_size = 2048
     num_epochs = 2
     num_games = 100
-    checkpoint = 2
+    checkpoint = 5
     def sample_size():
         return len(data_buffer)
 
